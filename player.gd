@@ -1,7 +1,7 @@
 extends CharacterBody2D
 
 const run_velocity = 300.0
-const run_friction = 0.04
+const run_friction = 0.07
 const jump_velocity = -350.0
 const wall_jump_velocity = 100.0
 const wall_friction = 0.3
@@ -9,7 +9,10 @@ const wall_hold_fall_velocity = 10.0
 const max_fall_velocity = 500.0
 const max_wall_slide_velocity = 250.0
 const wall_jump_input_lockout = 0.35
-const air_jumps = 0
+const air_jumps = 1
+const air_dashes = 2
+const dash_velocity = 500.0
+const max_dash_distance = 100.0
 
 # Get the gravity from the project settings to be synced with RigidBody nodes.
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -25,27 +28,15 @@ var wall_jump_timer: float
 var wall_jump_direction: float
 var air_jumped = 0
 var floor_jumped = false
+var dashing = false
+var air_dashed = 0
+var direction_facing = 1
+var dash_distance = 0.0
+var max_air_velocity = 0.0
 
 func _physics_process(delta):
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	direction = Input.get_axis("ui_left", "ui_right")
-	if !wall_jumped:
-		if direction:
-			velocity.x = direction * run_velocity
-		else:
-			velocity.x = move_toward(velocity.x, 0, run_velocity * run_friction)
-	else:
-		wall_jump_timer -= delta
-		if direction == wall_jump_direction:
-			velocity.x = direction * run_velocity
-		else:
-			velocity.x -= (wall_jump_direction * wall_jump_velocity) / wall_jump_input_lockout * delta
-		if wall_jump_timer <= 0:
-			wall_jumped = false
-
-	# Add the gravity.
+	# Gravity
 	if !is_on_floor():
 		if is_on_wall_only():
 			if direction+get_wall_normal()[0] == 0:
@@ -59,6 +50,8 @@ func _physics_process(delta):
 				else:
 					was_on_wall_only = false
 					velocity.y = min(velocity.y + (gravity * delta), max_fall_velocity)
+		elif dashing:
+			velocity.y = 0
 		else:
 			was_on_wall_only = false
 			velocity.y = min(velocity.y + (gravity * delta), max_fall_velocity)
@@ -66,7 +59,29 @@ func _physics_process(delta):
 		if !raycast_2d.is_colliding():
 			high_jump = true
 
-	# Handle jump.
+	# L/R movement
+	direction = Input.get_axis("ui_left", "ui_right")
+	if direction != 0:
+		direction_facing = direction
+	if !wall_jumped and !dashing:
+		if direction:
+			if is_on_floor():
+				velocity.x = direction * run_velocity
+			else:
+				max_air_velocity = max(abs(velocity.x), abs(run_velocity))
+				velocity.x = direction * max_air_velocity
+		else:
+			velocity.x = move_toward(velocity.x, 0, run_velocity * run_friction)
+	elif wall_jumped:
+		wall_jump_timer -= delta
+		if direction == wall_jump_direction:
+			velocity.x = direction * run_velocity
+		else:
+			velocity.x -= (wall_jump_direction * wall_jump_velocity) / wall_jump_input_lockout * delta
+		if wall_jump_timer <= 0:
+			wall_jumped = false
+
+	# Jumping
 	if is_on_floor() or is_on_wall():
 		air_jumped = 0
 	if Input.is_action_just_pressed("ui_accept"):
@@ -82,10 +97,33 @@ func _physics_process(delta):
 		elif air_jumped < air_jumps:
 			velocity.y = jump_velocity
 			air_jumped += 1
-	if Input.is_action_just_released("ui_accept") and velocity.y < 0:
-		velocity.y = 0
+	if Input.is_action_just_released("ui_accept"):
+		if velocity.y < 0:
+			velocity.y = 0
 		wall_jumped = false
 		floor_jumped = false
+
+	# Dashing
+	if Input.is_action_just_pressed("ui_dash") and !dashing:
+		if is_on_floor():
+			velocity.x = dash_velocity * direction_facing
+			dashing = true
+		elif air_dashed < air_dashes:
+			velocity.x = dash_velocity * direction_facing
+			dashing = true
+			air_dashed += 1
+	elif dashing:
+		dash_distance += dash_velocity * delta
+		if dash_distance >= max_dash_distance:
+			if is_on_floor():
+				velocity.x = 0
+			dashing = false
+			dash_distance = 0
+	if Input.is_action_just_released("ui_dash"):
+		dashing = false
+		dash_distance = 0
+	if is_on_floor() or is_on_wall():
+		air_dashed = 0
 
 	# debug zone
 	#print(_animation_player.get_current_animation()," at ",_animation_player.get_current_animation_position())
@@ -96,13 +134,20 @@ func _physics_process(delta):
 	#print(direction)
 	#print(get_wall_normal()[0], " is on wall: ", is_on_wall(), get_position().x)
 	#print(get_position().x)
+	#print(direction_facing.target_position)
+	#print(dash_distance)
+	#print(velocity.x)
 	update_animation()
 	move_and_slide()
 
 func update_animation():
 	if direction != 0:
 		animated_sprite_2d.flip_h = (direction < 0)
-	if is_on_floor():
+	if dashing:
+		_animation_player.play("run")
+		_animation_player.pause()
+		_animation_player.seek(0.51,true)
+	elif is_on_floor():
 		if velocity.x != 0:
 			_animation_player.play("run")
 		else:
@@ -113,7 +158,7 @@ func update_animation():
 				if high_jump:
 					_animation_player.play("land")
 					_animation_player.queue("idle")
-	if !is_on_floor():
+	elif !is_on_floor():
 		if !is_on_wall():
 			_animation_player.play("jump")
 			_animation_player.pause()
@@ -139,3 +184,5 @@ func update_animation():
 		high_jump = false
 	if is_on_wall_only():
 		was_on_wall_only = true
+	if is_on_floor() or is_on_wall():
+		max_air_velocity = 0.0
