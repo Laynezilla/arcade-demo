@@ -18,7 +18,9 @@ const max_dash_distance = 100.0
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var animated_sprite_2d = $AnimatedSprite2D
 @onready var _animation_player = $AnimationPlayer
-@onready var raycast_2d = $RayCast2D
+@onready var raycast_2d = $HighJumpRay
+@onready var touch_right_ray = $TouchRightRay
+@onready var touch_left_ray = $ToughLeftRay
 var was_on_wall_only = false
 var was_on_floor = false
 var high_jump = false
@@ -39,7 +41,7 @@ func _physics_process(delta):
 	# Gravity
 	if !is_on_floor():
 		if is_on_wall_only():
-			if direction+get_wall_normal()[0] == 0:
+			if is_pushing_wall():
 				if !was_on_wall_only:
 					velocity.y = 0
 				else:
@@ -137,6 +139,8 @@ func _physics_process(delta):
 	#print(direction_facing.target_position)
 	#print(dash_distance)
 	#print(velocity.x)
+	#print(direction, ", ", ceil(get_wall_normal()[0]))
+	#print(is_pushing_wall(), ", ", is_on_wall())
 	update_animation()
 	move_and_slide()
 
@@ -179,6 +183,7 @@ func update_animation():
 					_animation_player.pause()
 					_animation_player.seek(0.35,true)
 
+# conditional var reset
 	if is_on_floor():
 		was_on_floor = true
 		high_jump = false
@@ -186,3 +191,9 @@ func update_animation():
 		was_on_wall_only = true
 	if is_on_floor() or is_on_wall():
 		max_air_velocity = 0.0
+
+func is_pushing_wall():
+	if (direction == -1 and touch_left_ray.is_colliding()) or (direction == 1 and touch_right_ray.is_colliding()):
+		return true
+	else:
+		return false

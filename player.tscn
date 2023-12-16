@@ -315,7 +315,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_un4xf"]
-size = Vector2(19, 30)
+size = Vector2(20, 30)
 
 [sub_resource type="Animation" id="Animation_2ajs0"]
 length = 0.001
@@ -523,7 +523,7 @@ script = ExtResource("1_v5qsm")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_t1647")
-animation = &"run"
+animation = &"jump"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(-0.5, 1)
@@ -534,6 +534,12 @@ libraries = {
 "": SubResource("AnimationLibrary_3665o")
 }
 
-[node name="RayCast2D" type="RayCast2D" parent="."]
+[node name="HighJumpRay" type="RayCast2D" parent="."]
+
+[node name="TouchRightRay" type="RayCast2D" parent="."]
+target_position = Vector2(11, 0)
+
+[node name="ToughLeftRay" type="RayCast2D" parent="."]
+target_position = Vector2(-11, 0)
 
 [connection signal="animation_looped" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_looped"]
