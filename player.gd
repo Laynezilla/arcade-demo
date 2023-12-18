@@ -52,7 +52,7 @@ func _physics_process(delta):
 				else:
 					was_on_wall_only = false
 					velocity.y = min(velocity.y + (gravity * delta), max_fall_velocity)
-		elif dashing:
+		elif dashing and !Input.is_action_pressed("ui_accept"):
 			velocity.y = 0
 		else:
 			was_on_wall_only = false
@@ -88,6 +88,7 @@ func _physics_process(delta):
 		air_jumped = 0
 	if Input.is_action_just_pressed("ui_accept"):
 		if is_on_floor():
+			print("jump! ", is_on_floor())
 			velocity.y = jump_velocity
 			floor_jumped = true
 		elif is_on_wall_only():
