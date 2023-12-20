@@ -21,6 +21,8 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var raycast_2d = $HighJumpRay
 @onready var touch_right_ray = $TouchRightRay
 @onready var touch_left_ray = $ToughLeftRay
+@onready var health_bar = $HealthBar
+
 var was_on_wall_only = false
 var was_on_floor = false
 var high_jump = false
@@ -35,6 +37,7 @@ var air_dashed = 0
 var direction_facing = 1
 var dash_distance = 0.0
 var max_air_velocity = 0.0
+var health = 100
 
 func _physics_process(delta):
 
@@ -88,9 +91,9 @@ func _physics_process(delta):
 		air_jumped = 0
 	if Input.is_action_just_pressed("ui_accept"):
 		if is_on_floor():
-			print("jump! ", is_on_floor())
 			velocity.y = jump_velocity
 			floor_jumped = true
+			lose_health(20)
 		elif is_on_wall_only():
 			wall_jump_direction = get_wall_normal()[0]
 			velocity.y = jump_velocity
@@ -142,8 +145,10 @@ func _physics_process(delta):
 	#print(velocity.x)
 	#print(direction, ", ", ceil(get_wall_normal()[0]))
 	#print(is_pushing_wall(), ", ", is_on_wall())
+	#print("health: ", health, ", ", health_bar.value)
 	update_animation()
 	move_and_slide()
+	update_health()
 
 func update_animation():
 	if direction != 0:
@@ -198,3 +203,18 @@ func is_pushing_wall():
 		return true
 	else:
 		return false
+
+func update_health():
+	if health <= health_bar.min_value:
+		health = health_bar.min_value
+	if health >= health_bar.max_value:
+		health = health_bar.max_value
+	health_bar.value = health
+
+func lose_health(damage):
+	health -= damage
+	update_health()
+
+func gain_health(heal):
+	health += heal
+	update_health()

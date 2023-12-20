@@ -1,4 +1,4 @@
-[gd_scene load_steps=57 format=3 uid="uid://c8r10ohk31mhm"]
+[gd_scene load_steps=61 format=3 uid="uid://c8r10ohk31mhm"]
 
 [ext_resource type="Texture2D" uid="uid://ce8cq0wr6sv40" path="res://assets/sprite sheets/Character Idle 48x48.png" id="1_dkte6"]
 [ext_resource type="Script" path="res://player.gd" id="1_v5qsm"]
@@ -517,6 +517,20 @@ _data = {
 "wall_slide": SubResource("Animation_eq37p")
 }
 
+[sub_resource type="Gradient" id="Gradient_bb2xc"]
+colors = PackedColorArray(1, 0, 0, 1, 1, 0.458824, 0.458824, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_m026d"]
+gradient = SubResource("Gradient_bb2xc")
+width = 40
+
+[sub_resource type="Gradient" id="Gradient_1fc3e"]
+colors = PackedColorArray(0.462745, 0.678431, 0.462745, 1, 0, 0.639216, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_opvh0"]
+gradient = SubResource("Gradient_1fc3e")
+width = 40
+
 [node name="Player" type="CharacterBody2D"]
 floor_snap_length = 3.0
 script = ExtResource("1_v5qsm")
@@ -541,5 +555,14 @@ target_position = Vector2(11, 0)
 
 [node name="ToughLeftRay" type="RayCast2D" parent="."]
 target_position = Vector2(-11, 0)
+
+[node name="HealthBar" type="TextureProgressBar" parent="."]
+offset_left = -20.0
+offset_top = -22.0
+offset_right = 20.0
+offset_bottom = -17.0
+value = 100.0
+texture_under = SubResource("GradientTexture1D_m026d")
+texture_progress = SubResource("GradientTexture1D_opvh0")
 
 [connection signal="animation_looped" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_looped"]
